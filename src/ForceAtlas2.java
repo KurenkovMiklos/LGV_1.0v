@@ -1,12 +1,10 @@
-import org.apache.commons.math3.stat.ranking.NaNStrategy;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultEdge;
 
 import java.util.*;
 
-import static java.lang.Double.NaN;
-
 public class ForceAtlas2 extends VertexPlacementAlgorithm {
+    List<String> currentArgs;
     private final double epsilon = 1e-16; // Math stability
     private double kr; //Repulsion Force
     private enum AttrMode {Classical, LinLog, Dissuade_Hubs};     private AttrMode attr = AttrMode.Classical;
@@ -26,6 +24,8 @@ public class ForceAtlas2 extends VertexPlacementAlgorithm {
     int[] coordinates;
     int[] degrees;
     List<int[]>edges;
+
+    HashMap<Integer, int[]> loopNumChache = new HashMap<Integer, int[]>(); //store coordinates for calculated positions
 
     public void Init(int width, int height, Graph<Integer, DefaultEdge> graph){
         vertexCount = graph.vertexSet().size();
@@ -61,10 +61,23 @@ public class ForceAtlas2 extends VertexPlacementAlgorithm {
         //    System.out.println(edges.indexOf(currentEdges) + 1 + ": " + Arrays.toString(currentEdges));
         //}
 
-        coordinates = startCoordinates.clone();
+        int StartloopNum = 0;
+        for (Integer key : loopNumChache.keySet()) {
+            if (key <= loopNum && key > StartloopNum){
+                StartloopNum = key;
+            }
+        }
+        if (StartloopNum == 0) {
+            coordinates = startCoordinates.clone();
+        } else {
+            coordinates = loopNumChache.get(StartloopNum).clone();
+        }
 
 
-        for (int loopCounter = 0; loopCounter < loopNum; loopCounter++) {
+        //System.out.println(StartloopNum);
+
+
+        for (int loopCounter = StartloopNum; loopCounter < loopNum; loopCounter++) {
 
             double[] forces = new double[vertexCount * 2];
             double[] forcesPrev = new double[vertexCount * 2];
@@ -213,11 +226,12 @@ public class ForceAtlas2 extends VertexPlacementAlgorithm {
 
         }
 
+        loopNumChache.put(loopNum, coordinates.clone());
         return coordinates;
     }
 
     public List<String> GetAguments() {
-        //add loop num and start layout and tolarance(swinging)
+        //start layout
 
         List<String> res = new ArrayList<String>();
         res.add("integer,loopNum,Loop Number");
@@ -228,9 +242,34 @@ public class ForceAtlas2 extends VertexPlacementAlgorithm {
         res.add("boolean,nooverlap,Prevent Overlapping");
         res.add("boolean,swing,Anti-Swinging");
         res.add("double,tolarance,Tolarance");
+        currentArgs = res;
         return res;
     }
     public void SetAguments(List<String> args) {
+
+
+        //check weather the loop num is the only one changed. if so, chache may be used, otherwise clear chache
+        List<String> args2 = new ArrayList<>(args);
+        List<String> currentArgs2 = new ArrayList<>(currentArgs);
+        String loopNumArg = "";
+        for( String arg : args2 ) {
+            String[] params = arg.split(",");
+            if (params[0].equals("loopNum")){
+                loopNumArg = arg;
+            }
+        }
+        args2.remove(loopNumArg);
+        for( String arg : currentArgs2 ) {
+            String[] params = arg.split(",");
+            if (params[0].equals("loopNum")){
+                loopNumArg = arg;
+            }
+        }
+        currentArgs2.remove(loopNumArg);
+        if (!currentArgs2.equals(args2)) {loopNumChache.clear(); System.out.println("chache cleared");}
+
+
+
         for( String arg : args ) {
             String[] params = arg.split(",");
             switch (params[0]) {
@@ -256,6 +295,7 @@ public class ForceAtlas2 extends VertexPlacementAlgorithm {
                 case "swing": swing = params[1].equals("true");  break;
             }
         }
+        currentArgs = args;
 
         //System.out.println(attr);
         //System.out.println(grav);
