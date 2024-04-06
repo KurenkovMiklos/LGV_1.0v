@@ -266,7 +266,7 @@ public class ForceAtlas2 extends VertexPlacementAlgorithm {
             }
         }
         currentArgs2.remove(loopNumArg);
-        if (!currentArgs2.equals(args2)) {loopNumChache.clear(); System.out.println("chache cleared");}
+        if (!currentArgs2.equals(args2)) {loopNumChache.clear(); /*System.out.println("chache cleared");*/}
 
 
 

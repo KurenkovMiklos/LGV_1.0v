@@ -25,13 +25,25 @@ class GraphDrawer{
         VPA.Init(width, height, graph);
     }
     protected BufferedImage Draw(){
-        BufferedImage img = new BufferedImage(width*5, height*5, BufferedImage.TYPE_INT_ARGB);
+        coordinates = VPA.PlaceVertexes();
+        int maxX = 0; int maxY = 0; int minX = 2147483647; int minY = 2147483647;
+        for (int i = 0; i < vertexCount; i++) {
+            if (coordinates[i*2] > maxX) { maxX = coordinates[i*2];}
+            if (coordinates[i*2+1] > maxY) { maxY = coordinates[i*2+1];}
+            if (coordinates[i*2] < minX) { minX = coordinates[i*2];}
+            if (coordinates[i*2+1] < minY) { minY = coordinates[i*2+1];}
+        }
+
+        maxX += 10; maxY += 10;
+        width = maxX - minX;
+        height = maxY - minY;
+
+        BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2d = img.createGraphics();
 
-        coordinates = VPA.PlaceVertexes();
         for (int i = 0; i < vertexCount; i++) {
-            coordinates[i*2] += width*2;
-            coordinates[i*2+1] += height*2;
+            coordinates[i*2] += (5 - minX);
+            coordinates[i*2+1] += (5 - minY);
         }
 
 

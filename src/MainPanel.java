@@ -15,8 +15,8 @@ public class MainPanel extends JPanel implements MouseWheelListener, MouseListen
 
     private BufferedImage image;
 
-    private double zoomFactor = 0.2;
-    private double prevZoomFactor = 0.2;
+    private double zoomFactor = 1;
+    private double prevZoomFactor = 1;
     private boolean zoomer;
     private boolean dragger;
     private boolean released;
@@ -51,8 +51,8 @@ public class MainPanel extends JPanel implements MouseWheelListener, MouseListen
     public void UpdateImage(VertexPlacementAlgorithm VPA){
         image = drawer.Draw();
         zoomer = true;
-        zoomFactor = 0.2;
-        prevZoomFactor = 0.2;
+        zoomFactor = 1;
+        prevZoomFactor = 1;
         xOffset = 0;
         yOffset = 0;
         repaint();
@@ -65,7 +65,6 @@ public class MainPanel extends JPanel implements MouseWheelListener, MouseListen
         super.paint(g);
 
         Graphics2D g2 = (Graphics2D) g;
-        if (!dragger) {zoomer = true;}
 
         if (zoomer) {
             AffineTransform at = new AffineTransform();
