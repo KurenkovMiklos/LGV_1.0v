@@ -37,7 +37,5 @@ public class CircleAlgorithm extends VertexPlacementAlgorithm {
     }
 
     @Override
-    void SetAguments(List<String> args) {
-
-    }
+    void SetAguments(List<String> args) {}
 }

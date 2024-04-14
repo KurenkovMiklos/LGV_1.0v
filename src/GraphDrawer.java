@@ -1,9 +1,12 @@
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultEdge;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
 
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.Set;
 
 class GraphDrawer{
@@ -69,4 +72,17 @@ class GraphDrawer{
 
         return img;
     }
+
+    public static void main(String[] args) {
+        GraphDrawer Drawer = new GraphDrawer();
+        Drawer.Init(2000,1000,new ForceAtlas2());
+        try {
+            File outputFile = new File("graph.png");
+            ImageIO.write(Drawer.Draw(), "png", outputFile);
+            System.out.println("Image saved successfully.");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 }

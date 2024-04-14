@@ -6,12 +6,12 @@ import java.util.*;
 public class ForceAtlas2 extends VertexPlacementAlgorithm {
     List<String> currentArgs;
     private final double epsilon = 1e-16; // Math stability
-    private double kr; //Repulsion Force
+    private double kr = 1; //Repulsion Force
     private enum AttrMode {Classical, LinLog, Dissuade_Hubs};     private AttrMode attr = AttrMode.Classical;
     private enum GravMode {No, Weak, Strong};     private GravMode grav = GravMode.No;
-    private double kg; //Gravitational Force
-    private boolean nooverlap; //Prevent Overlapping
-    private boolean swing; //Anti-Swinging
+    private double kg = 1; //Gravitational Force
+    private boolean nooverlap = false; //Prevent Overlapping
+    private boolean swing= false; //Anti-Swinging
     private double tolarance = 1;
     int loopNum = 100;
 
@@ -206,7 +206,7 @@ public class ForceAtlas2 extends VertexPlacementAlgorithm {
                     double[] vetexSpeed = new double[vertexCount];
                     for (int i = 0; i < vertexCount; i++) {
                         vetexSpeed[i] = Math.min((0.1 * globalSpeed) / (1 + (globalSpeed * Math.sqrt(vetexSwingingAbs[i]))), 10 / vetexForceAbs[i]);
-                        System.out.println(vetexSpeed[i]);
+                        //System.out.println(vetexSpeed[i]);
                     }
 
                     for (int i = 0; i < vertexCount; i++) {
