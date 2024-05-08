@@ -1,7 +1,12 @@
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultEdge;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
+import java.util.Timer;
+import java.util.concurrent.TimeUnit;
 
 public class ForceAtlas2 extends VertexPlacementAlgorithm {
     List<String> currentArgs;
@@ -73,11 +78,15 @@ public class ForceAtlas2 extends VertexPlacementAlgorithm {
             coordinates = loopNumChache.get(StartloopNum).clone();
         }
 
+        //ProgressMonitor progressMonitor = new ProgressMonitor(null, "Running ForceAtlas2:", "", StartloopNum, loopNum);
+        //VisualizationWindow.getInstance().setVisible(false);
 
         //System.out.println(StartloopNum);
 
 
         for (int loopCounter = StartloopNum; loopCounter < loopNum; loopCounter++) {
+
+            //EventQueue.invokeLater(new Runnable(){ public void run(){progressMonitor.setProgress(tempLoopCounter);}});
 
             double[] forces = new double[vertexCount * 2];
             double[] forcesPrev = new double[vertexCount * 2];
@@ -227,6 +236,9 @@ public class ForceAtlas2 extends VertexPlacementAlgorithm {
         }
 
         loopNumChache.put(loopNum, coordinates.clone());
+        //VisualizationWindow.getInstance().setVisible(true);
+        //progressMonitor.close();
+        //progressDialog.dispose();
         return coordinates;
     }
 

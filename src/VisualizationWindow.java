@@ -14,9 +14,14 @@ import javax.swing.*;
  */
 public class VisualizationWindow extends JFrame {
 
+    static VisualizationWindow instace = new VisualizationWindow();;
+
+    public static VisualizationWindow getInstance(){
+        return instace;
+    }
+
     private MainPanel mainPanel;
     private OptionsPanel optionsPanel;
-    private JLabel infoLabel;
     BufferedImage image = null;
     public VisualizationWindow() {
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -28,7 +33,8 @@ public class VisualizationWindow extends JFrame {
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         int width = (int) screenSize.getWidth();
         int height = (int) screenSize.getHeight();
-        VertexPlacementAlgorithm VPA = new ForceAtlas2();
+        //VertexPlacementAlgorithm VPA = new ForceAtlas2();
+        VertexPlacementAlgorithm VPA = new OpenOrd();
 
         // Load the image that will be shown in the panel
 

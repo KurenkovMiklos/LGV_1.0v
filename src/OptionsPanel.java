@@ -28,6 +28,7 @@ public class OptionsPanel extends JPanel {
 
 
         List<String> options = VPA.GetAguments();
+        if (options == null) {return;}
         for( String option : options ) {
             String[] params = option.split(",");
             switch (params[0]) {
