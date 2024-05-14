@@ -430,7 +430,7 @@ public class OpenOrd extends VertexPlacementAlgorithm{
                 min_edges = 20;
                 break;
             case COOLDOWN:
-                temperature = 500;
+                temperature = 200;
                 attraction = 1;
                 damping_mult = .25;
                 cut_off_length = longestEdge;
