@@ -4,7 +4,13 @@ import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -13,14 +19,14 @@ public class OpenOrd extends VertexPlacementAlgorithm{
     int temperature = 2000;
     double attraction = 10;
     double damping_mult = 1.0;
-    double edgeCuttingParameter = 0.2;
+    double edgeCuttingParameter = 0;
     double longestEdge = 0;
     double cut_off_length = 0;
     double min_cut_off_length = 0;
     double cut_rate = 0;
 
     double max_cluster_distance = 50;
-    int multi_level_recursion_level = 1;
+    int multi_level_recursion_level = 0;
 
     double min_edges = 100;
 
@@ -67,7 +73,7 @@ public class OpenOrd extends VertexPlacementAlgorithm{
                 i++;
             }
         }
-        CircleAlgorithm ca = new CircleAlgorithm();
+        RandomAlgorithm ca = new RandomAlgorithm();
         ca.Init(width, height, graph);
         startCoordinates = ca.PlaceVertexes();
 
@@ -90,28 +96,30 @@ public class OpenOrd extends VertexPlacementAlgorithm{
 
         int[] NextStageSwitch = new int[] {0, loopNum/4, loopNum/2, 3*(loopNum/4), (int) (loopNum*0.85), loopNum};
 
+
         System.out.println("LIQUID");
-        stage = STAGE.LIQUID; InitParameters();
-        for (int loopCounter = NextStageSwitch[0]; loopCounter < NextStageSwitch[1]; loopCounter++) { RunThreads(); ChangeParameters();}
+        stage = STAGE.LIQUID; InitParameters(); Draw();
+        for (int loopCounter = NextStageSwitch[0]; loopCounter < NextStageSwitch[1]; loopCounter++) { VertexMovementLoop(); ChangeParameters();}
 
         System.out.println("EXPANSION");
-        stage = STAGE.EXPANSION; UpdateLongestEdge(); InitParameters();
-        for (int loopCounter = NextStageSwitch[1]; loopCounter < NextStageSwitch[2]; loopCounter++) { RunThreads(); ChangeParameters();}
+        stage = STAGE.EXPANSION; UpdateLongestEdge(); InitParameters(); Recenter(); Draw();
+        for (int loopCounter = NextStageSwitch[1]; loopCounter < NextStageSwitch[2]; loopCounter++) { VertexMovementLoop(); ChangeParameters();}
 
         System.out.println("COOLDOWN");
-        stage = STAGE.COOLDOWN; RemoveCutEdges(); UpdateLongestEdge(); InitParameters();
-        for (int loopCounter = NextStageSwitch[2]; loopCounter < NextStageSwitch[3]; loopCounter++) { RunThreads(); ChangeParameters();}
+        stage = STAGE.COOLDOWN; RemoveCutEdges(); UpdateLongestEdge(); Recenter(); InitParameters(); Draw();
+        for (int loopCounter = NextStageSwitch[2]; loopCounter < NextStageSwitch[3]; loopCounter++) { VertexMovementLoop(); ChangeParameters();}
 
         System.out.println("CRUNCH");
-        stage = STAGE.CRUNCH; RemoveCutEdges(); InitParameters();
-        for (int loopCounter = NextStageSwitch[3]; loopCounter < NextStageSwitch[4]; loopCounter++) { RunThreads(); ChangeParameters();}
+        stage = STAGE.CRUNCH; RemoveCutEdges(); InitParameters(); Recenter(); Draw();
+        for (int loopCounter = NextStageSwitch[3]; loopCounter < NextStageSwitch[4]; loopCounter++) { VertexMovementLoop(); ChangeParameters();}
 
         System.out.println("SIMMER");
-        stage = STAGE.SIMMER; InitParameters();
-        for (int loopCounter = NextStageSwitch[4]; loopCounter < NextStageSwitch[5]; loopCounter++) { RunThreads(); ChangeParameters();}
+        stage = STAGE.SIMMER; InitParameters(); Draw();
+        for (int loopCounter = NextStageSwitch[4]; loopCounter < NextStageSwitch[5]; loopCounter++) { VertexMovementLoop(); ChangeParameters();}
 
         System.out.println("DONE");
         stage = STAGE.DONE;
+        Draw();
 
         if (multi_level_recursion_level > 0){
             Graph<Integer, DefaultEdge> coarsenedGraph = Coarsen();
@@ -350,6 +358,7 @@ public class OpenOrd extends VertexPlacementAlgorithm{
             if (centralJumpY > height) {centralJumpY = height;}
 
             centralJumpEnergy = GetEnergy(neighbours, centralJumpX, centralJumpY);
+
             randomJumpX = (int) (x + ((0.5 - rand.nextDouble()) * temperature));
             randomJumpY = (int) (y + ((0.5 - rand.nextDouble()) * temperature));
 
@@ -366,15 +375,14 @@ public class OpenOrd extends VertexPlacementAlgorithm{
                 coordinates[currentVertex * 2 - 2] = randomJumpX;
                 coordinates[currentVertex * 2 - 1] = randomJumpY;
                 density[randomJumpX / 50][randomJumpY / 50]++;
+                density[x/50][y/50]--;
             } else if (centralJumpEnergy < NoJumpEnergy) {
                 coordinates[currentVertex * 2 - 2] = centralJumpX;
                 coordinates[currentVertex * 2 - 1] = centralJumpY;
                 density[centralJumpX / 50][centralJumpY / 50]++;
-            } else {
-                density[x / 50][y / 50]++;
+                density[x / 50][y / 50]--;
             }
-
-            density[x / 50][y / 50]--;
+            //UpdateDensity();
         }
     }
 
@@ -389,7 +397,7 @@ public class OpenOrd extends VertexPlacementAlgorithm{
                 if (min_edges > 12) { min_edges -= 0.05; };
                 break;
             case COOLDOWN:
-                if (temperature > 50) { temperature -= 10; }
+                if (temperature > 500) { temperature -= 10; }
                 if (cut_off_length > min_cut_off_length) {cut_off_length -= cut_rate*2; }
                 if (min_edges > 12) { min_edges -= 0.05; };
                 break;
@@ -422,22 +430,22 @@ public class OpenOrd extends VertexPlacementAlgorithm{
                 min_edges = 20;
                 break;
             case COOLDOWN:
-                temperature = 2000;
+                temperature = 500;
                 attraction = 1;
-                damping_mult = .1;
+                damping_mult = .25;
                 cut_off_length = longestEdge;
                 min_cut_off_length = longestEdge * (1 - edgeCuttingParameter);
                 cut_rate = (longestEdge - min_cut_off_length) / 400;
                 min_edges = 12;
                 break;
             case CRUNCH:
-                temperature = 250;
+                temperature = 500;
                 attraction = 1;
                 damping_mult = .25;
                 cut_off_length = longestEdge * (1 - edgeCuttingParameter);
                 break;
             case SIMMER:
-                temperature = 250;
+                temperature = 500;
                 attraction = 0.5;
                 damping_mult = 0.0;
                 break;
@@ -454,7 +462,7 @@ public class OpenOrd extends VertexPlacementAlgorithm{
             res += (Math.pow(coordinates[2*n - 2] - x, 2) + Math.pow(coordinates[2*n - 1] - y, 2)) * attraction_factor;
         }
         if (stage != STAGE.SIMMER){
-            res += density[x/50][y/50];
+            res += (density[x/50][y/50] + 1) * 100;
             return res;
         }
         else {
@@ -463,14 +471,14 @@ public class OpenOrd extends VertexPlacementAlgorithm{
                 if (Math.pow(coordinates[2 * i] - x, 2) + Math.pow(coordinates[2 * i + 1] - y, 2) < 2500) {
                     d++;
                 }
-                ;
             }
-            res += d;
+            res += d * 10;
         }
-        return res;
+        return res + 10;
     }
 
     private void UpdateDensity() {
+        density = new int[width/50 + 1][height/50 + 1];
         for (int currentVertex = 1; currentVertex <= vertexCount; currentVertex++) {
             int x = coordinates[currentVertex * 2 - 2];
             int y = coordinates[currentVertex * 2 - 1];
@@ -617,6 +625,39 @@ public class OpenOrd extends VertexPlacementAlgorithm{
             coordinates[2*currentVertex-2] = coarsenedCoordinates[2*clouster - 2];
             coordinates[2*currentVertex-1] = coarsenedCoordinates[2*clouster - 1];
         }
+        Recenter();
+    }
+
+    public void Recenter() {
+        int maxX = 0; int maxY = 0; int minX = 2147483647; int minY = 2147483647;
+        for (int i = 0; i < vertexCount; i++) {
+            if (coordinates[i*2] > maxX) { maxX = coordinates[i*2];}
+            if (coordinates[i*2+1] > maxY) { maxY = coordinates[i*2+1];}
+            if (coordinates[i*2] < minX) { minX = coordinates[i*2];}
+            if (coordinates[i*2+1] < minY) { minY = coordinates[i*2+1];}
+        }
+
+        int w = maxX - minX;
+        int h = maxY - minY;
+
+        for (int i = 0; i < vertexCount; i++) {
+            coordinates[i*2] -= minX;
+            coordinates[i*2+1] -= minY;
+            coordinates[i*2] += width/2;
+            coordinates[i*2+1] += height/2;
+            coordinates[i*2] -= w/2;
+            coordinates[i*2+1] -= h/2;
+        }
+        UpdateDensity();
+    }
+
+    public void SetRecursion (int level, double distance) {
+        multi_level_recursion_level = level;
+        max_cluster_distance = distance;
+    }
+
+    public void SetCoordinates (int[] c) {
+        coordinates = c;
     }
 
     @Override
@@ -643,12 +684,74 @@ public class OpenOrd extends VertexPlacementAlgorithm{
 
     }
 
-    public void SetRecursion (int level, double distance) {
-        multi_level_recursion_level = level;
-        max_cluster_distance = distance;
+    protected void Draw(){
+        int[] coordinates2 = coordinates.clone();
+
+        /*int maxX = 0; int maxY = 0; int minX = 2147483647; int minY = 2147483647;
+        for (int i = 0; i < vertexCount; i++) {
+            if (coordinates2[i*2] > maxX) { maxX = coordinates2[i*2];}
+            if (coordinates2[i*2+1] > maxY) { maxY = coordinates2[i*2+1];}
+            if (coordinates2[i*2] < minX) { minX = coordinates2[i*2];}
+            if (coordinates2[i*2+1] < minY) { minY = coordinates2[i*2+1];}
+        }
+
+        maxX += 10; maxY += 10;
+        int w = maxX - minX;
+        int h = maxY - minY;
+        BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);*/
+
+        BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = img.createGraphics();
+
+        g2d.setColor(Color.BLUE);
+        for (int i = 0; i < width/50 + 1; i++) {
+            for (int j = 0; j < height/50 + 1; j++) {
+                g2d.drawRect(i * 50,j * 50,50,50);
+                //System.out.print(density[i][j]);
+            }
+            //System.out.println();
+        }
+
+
+        /*for (int i = 0; i < vertexCount; i++) {
+            coordinates2[i*2] += (5 - minX);
+            coordinates2[i*2+1] += (5 - minY);
+        }*/
+
+
+        //System.out.println(vertexCount);
+
+        BasicStroke edgeStroke = new BasicStroke(2);
+
+        g2d.setColor(Color.BLACK);
+        g2d.setStroke(edgeStroke);
+        Set<DefaultEdge> edges = graph.edgeSet();
+        for (DefaultEdge edge : edges) {
+            int sourceVertex = graph.getEdgeSource(edge);
+            int targetVertex = graph.getEdgeTarget(edge);
+            g2d.drawLine(coordinates2[2*sourceVertex - 2], coordinates2[2*sourceVertex - 1],coordinates2[2*targetVertex - 2], coordinates2[2*targetVertex - 1]);
+        }
+
+        g2d.setColor(Color.RED);
+
+        for (int i = 0; i < vertexCount; i++) {
+            g2d.fillOval(coordinates2[2*i] - 5, coordinates2[2*i + 1] - 5, 10, 10);
+        }
+
+        String filename = stage.toString() + ".png";
+        try {
+            File outputFile = new File(filename);
+            ImageIO.write(img, "png", outputFile);
+            //System.out.println("Image saved successfully.");
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("Failed to save Image");
+        }
     }
 
-    public void SetCoordinates (int[] c) {
-        coordinates = c;
+    public static void main(String[] args) {
+        OpenOrd Drawer = new OpenOrd();
+        Drawer.Init(2000,1000, GraphLoader.Load());
+        Drawer.PlaceVertexes();
     }
 }
