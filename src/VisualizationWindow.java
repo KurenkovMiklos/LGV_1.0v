@@ -28,13 +28,16 @@ public class VisualizationWindow extends JFrame {
         setSize(2000,1000);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setLayout(null);
-        setTitle("Zoomable Panel");
+        setTitle("Large Graph Viewer");
 
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         int width = (int) screenSize.getWidth();
         int height = (int) screenSize.getHeight();
-        //VertexPlacementAlgorithm VPA = new ForceAtlas2();
-        VertexPlacementAlgorithm VPA = new OpenOrd();
+
+        //VertexPlacementAlgorithm VPA = new RandomAlgorithm();
+        //VertexPlacementAlgorithm VPA = new CircleAlgorithm();
+        VertexPlacementAlgorithm VPA = new ForceAtlas2();
+        //VertexPlacementAlgorithm VPA = new OpenOrd();
 
         // Load the image that will be shown in the panel
 

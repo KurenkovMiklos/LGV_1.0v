@@ -75,7 +75,7 @@ class GraphDrawer{
 
     public static void main(String[] args) {
         GraphDrawer Drawer = new GraphDrawer();
-        Drawer.Init(2000,1000,new ForceAtlas2());
+        Drawer.Init(2000,1000,new RandomAlgorithm());
         try {
             File outputFile = new File("graph.png");
             ImageIO.write(Drawer.Draw(), "png", outputFile);
